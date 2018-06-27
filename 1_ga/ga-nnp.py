@@ -1,7 +1,7 @@
 import math
 import random
 import operator
-from amp inport Amp
+from amp import Amp
 from amp.descriptor.gaussian import Gaussian
 from amp.model.neuralnetwork import NeuralNetwork
 
