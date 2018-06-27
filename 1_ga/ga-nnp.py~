@@ -1,0 +1,19 @@
+import math
+
+"""
+Developing Neural Network Potential for nanoparticles with the help of 
+genetic algorithm. The NNP will be trained using training data from 
+calculations of slab and GA will evolve the set of planes that are
+required to construct the NNP for NPs
+"""
+
+def fitness(reference_energy, nnp_energy):
+    """
+    :param reference_energy: reference energy calculated by EAM
+    :nnp_energy: predicted energy by NNP
+    :return: squared error
+    """
+
+    return math.pow(reference_energy - nnp_energy, 2)
+
+fitness(-2, -3)
