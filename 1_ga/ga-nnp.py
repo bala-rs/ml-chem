@@ -1,8 +1,20 @@
 import math
 import random
 import operator
+from amp inport Amp
+from amp.descriptor.gaussian import Gaussian
+from amp.model.neuralnetwork import NeuralNetwork
+
+from ase import Atoms
+from ase.calculators.emt import EMT
+from ase import units
+from ase.md.velocitydistribution import MaxwellBoltzmannDistribution
+from ase.md import VelocityVerlet
+from ase.constraints import FixAtoms
 from ase.lattice.cubic import FaceCenteredCubic
 from ase.build import surface
+from ase.build import make_supercell
+from ase.db import connect
 
 """
 Developing Neural Network Potential for nanoparticles with the help of 
@@ -61,6 +73,38 @@ def generate_first_population(population_size, mi_per_individual=10):
 
     return population
 
+def generate_training_set(individual, db_name):
+
+    """
+    Do MD using EMT calculator with each slab for 10 steps and add it to train.db
+    """
+
+    db = connect(db_name)
+    for miller_indices in individual:
+
+        # Do MD
+        slab = generate_slab(miller_indices, 5)
+        slab = make_supercell(slab, P=[[3, 1, 1], [1, 3, 1], [1, 1, 1]])
+
+        slab.set_calculator(EMT())
+        slab.get_potential_energy()
+
+        db.write(slab)
+
+        MaxwellBoltzmannDistribution(slab, 300. * units.kB)
+        dyn = VelocityVerlet(slab, dt=1. * units.fs)
+        for i in range(1, 10):
+            dyn.run(10)
+            db.write(slab)
+
 
 def compute_population_performance(population, reference):
-    pass
+
+    for individual in population:
+
+        # Construct NNP
+        nnp = Amp(descriptor=Gaussian(),
+                  model=NeuralNetwork(hiddenlayers=(5, 5)),
+                  cores=8)
+
+        # Predict energy of NP
